@@ -92,14 +92,18 @@ threadmain(int argc, char *argv[])
 
 	if(argc != 0)
 		usage();
+		
+	/* The main thread will exit, so we need files on the heap ☺ */
 
 	// Setup ctl file
-	File9 ctl = (File9) { (Ref){ 0 }, 0, "ctl" };
-	files[0] = &ctl;
+	File9 *ctl = calloc(1, sizeof (File9));
+	*ctl = (File9) { (Ref){ 0 }, 0, "ctl" };
+	files[0] = ctl;
 	
 	// Setup log file
-	File9 log = (File9) { (Ref){ 0 }, 1, "log" };
-	files[1] = &log;
+	File9 *log = calloc(1, sizeof (File9));
+	*log = (File9) { (Ref){ 0 }, 1, "log" };
+	files[1] = log;
 
 	threadpostmountsrv(&srvfs, srv, mnt, MREPL|MCREATE);
 	threadexits(nil);
@@ -155,7 +159,7 @@ fsread(Req *r)
 		return;
 	}
 
-	switch(q.path){
+	switch((int) q.path){
 	case 0:
 		// ctl file
 		strcpy(readmsg, "ctl file is unreadable.\n");
@@ -198,7 +202,7 @@ fswrite(Req *r)
 	
 	// At this point, str contains the written bytes
 	
-	switch(q.path){
+	switch((int) q.path){
 	case 0:
 		// ctl file
 		logcmd(str);
