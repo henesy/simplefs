@@ -6,7 +6,12 @@
 #include <9p.h>
 #include "fs.h"
 
+// All active files in the fs
 File9 *files[Nfiles];
+
+// Commands log ;; 4 entries, 1024 wide
+char clog[Ncmd][Cmdwidth];
+
 
 // Prototypes for 9p handler functions
 static void		fsattach(Req *r);
@@ -16,6 +21,7 @@ static void		fswrite(Req *r);
 static char*	fswalkl(Fid * fid, char *name, Qid *qid);
 static char*	fsclone(Fid *fid, Fid *newfid);
 static void		fsstat(Req *r);
+
 
 // Srv structure to handle incoming 9p communications
 static Srv srvfs = 
@@ -36,6 +42,30 @@ usage(void)
 	threadexitsall("usage");
 }
 
+// Push a message into the log
+void
+logcmd(char* str)
+{
+	int i;
+	for(i = Ncmd-1; i > 0; i--)
+		strcpy(clog[i], clog[i-1]);
+	strncpy(clog[0], str, Cmdwidth);
+}
+
+// Print the log
+char*
+log2str(void)
+{
+	char str[Ncmd * Cmdwidth];
+	memset(str, '\0', Ncmd * Cmdwidth);
+
+	int i;
+	for(i = Ncmd-1; i >= 0; i--)
+		strncat(str, clog[i], strlen(clog[i]));
+
+	return str;
+}
+
 
 /* A simple 9p fileserver to show a minimal set of operations */
 void
@@ -46,7 +76,7 @@ threadmain(int argc, char *argv[])
 	srv = nil;
 	mnt = "/mnt/simplefs";
 
-	ARGBEGIN {
+	ARGBEGIN{
 	case 'D':
 		chatty9p++;
 		break;
@@ -58,7 +88,7 @@ threadmain(int argc, char *argv[])
 		break;
 	default:
 		usage();
-	} ARGEND;
+	}ARGEND;
 
 	if(argc != 0)
 		usage();
@@ -76,7 +106,7 @@ threadmain(int argc, char *argv[])
 }
 
 
-// Handle 9p attach
+// Handle 9p attach -- independent implementation
 static void
 fsattach(Req *r)
 {
@@ -85,7 +115,7 @@ fsattach(Req *r)
 	respond(r, nil);
 }
 
-// Get directory entries for stat and such
+// Get directory entries for stat and such -- independent implementation
 static int
 getdirent(int n, Dir *d, void *)
 {
@@ -114,7 +144,8 @@ fsread(Req *r)
 {
 	Fid		*fid;
 	Qid		q;
-	char	readmsg[] = "Nothing special in this read.\n";
+	char	readmsg[Ncmd * Cmdwidth];
+	readmsg[0] = '\0';
 
 	fid = r->fid;
 	q = fid->qid;
@@ -132,8 +163,11 @@ fsread(Req *r)
 	case 1:
 		// log file
 		// TODO -- attach stdout to write to the read stream
-		strcpy(readmsg, "log shows prior commands.\n");
+		// strcpy(readmsg, "log shows prior commands.\n");
+		strcpy(readmsg, log2str());
 		break;
+	default:
+		strcpy(readmsg, "Nothing special in this read.\n");
 	}
 	
 	// Set the read reply string
@@ -149,7 +183,7 @@ fswrite(Req *r)
 {
 	Fid		*fid;
 	Qid		q;
-	char	str[10];
+	char	str[Cmdwidth];
 
 	fid = r->fid;
 	q = fid->qid;
@@ -164,12 +198,22 @@ fswrite(Req *r)
 	memmove(str, r->ifcall.data, r->ifcall.count);
 	str[r->ifcall.count] = 0;
 	
-	print("%s", str);
-
+	// At this point, str contains the written bytes
+	
+	switch(q.path){
+	case 0:
+		// ctl file
+		logcmd(str);
+		break;
+	default:
+		respond(r, "only ctl may be written to");
+		return;
+	}
+	
 	respond(r, nil);
 }
 
-// Handle 9p walk
+// Handle 9p walk -- independent implementation
 static char *
 fswalkl(Fid * fid, char *name, Qid *qid)
 {
@@ -197,7 +241,7 @@ fswalkl(Fid * fid, char *name, Qid *qid)
 	return "no such directory.";
 }
 
-// Handle 9p stat
+// Handle 9p stat -- independent implementation
 static void
 fsstat(Req *r)
 {
