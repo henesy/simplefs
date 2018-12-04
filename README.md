@@ -34,7 +34,7 @@ An example session:
 
 ## References
 
-- [9p](http://man.postnix.us/9front/5/intro)
+- [9p(5)](http://man.postnix.us/9front/5/intro)
 - [semfs](https://bitbucket.org/henesy/9intro/src/default/ch13/semfs/)
 - [ctlfs](http://contrib.9front.org/mischief/sys/src/cmd/proc/src/core/ctlfs.c)
 - [lib9p/ramfs](http://mirror.postnix.us/plan9front/sys/src/lib9p/ramfs.c)
