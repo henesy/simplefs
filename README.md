@@ -16,20 +16,21 @@ Simplefs accepts writes to the ctl file, logs the message, then prints out its h
 
 An example session:
 
-tenshi% mk
-6c -FTVw main.c
-6l  -o 6.out main.6
-tenshi% ./6.out
-tenshi% echo hi > /mnt/simplefs/log
-echo: write error: only ctl may be written to
-tenshi% echo hi > /mnt/simplefs/ctl
-tenshi% cat /mnt/simplefs/log
-hi
-tenshi% echo ducks > /mnt/simplefs/ctl
-tenshi% cat /mnt/simplefs/log
-hi
-ducks
-tenshi%
+	tenshi% mk
+	6c -FTVw main.c
+	6l  -o 6.out main.6
+	tenshi% ./6.out
+	tenshi% echo hi > /mnt/simplefs/log
+	echo: write error: only ctl may be written to
+	tenshi% echo hi > /mnt/simplefs/ctl
+	tenshi% cat /mnt/simplefs/log
+	hi
+	tenshi% echo ducks > /mnt/simplefs/ctl
+	tenshi% cat /mnt/simplefs/log
+	hi
+	ducks
+	tenshi%
+
 
 ## References
 
