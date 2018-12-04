@@ -18,7 +18,7 @@ static void		fsattach(Req *r);
 static int		getdirent(int n, Dir *d, void *);
 static void		fsread(Req *r);
 static void		fswrite(Req *r);
-static char*	fswalkl(Fid * fid, char *name, Qid *qid);
+static char*	fswalk1(Fid * fid, char *name, Qid *qid);
 static char*	fsclone(Fid *fid, Fid *newfid);
 static void		fsstat(Req *r);
 
@@ -29,7 +29,8 @@ static Srv srvfs =
 	.attach		=	fsattach,
 	.read		=	fsread,
 	.write		=	fswrite,
-	.walk1		=	fswalkl,
+	.walk1		=	fswalk1,
+	.clone		= 	fsclone,
 	.stat		=	fsstat,
 };
 
@@ -215,7 +216,7 @@ fswrite(Req *r)
 
 // Handle 9p walk -- independent implementation
 static char *
-fswalkl(Fid * fid, char *name, Qid *qid)
+fswalk1(Fid * fid, char *name, Qid *qid)
 {
 	Qid q;
 	int i;
@@ -255,4 +256,17 @@ fsstat(Req *r)
 	else
 		getdirent(q.path, &r->d, nil);
 	respond(r, nil);
+}
+
+// Handle 9p clone -- independent implementation
+static char *
+fsclone(Fid *fid, Fid *newfid)
+{
+	File9 *f;
+	
+	f = fid->aux;
+	if(f != nil)
+		incref(f);
+	newfid->aux = f;
+	return nil;
 }
