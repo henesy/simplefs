@@ -1,4 +1,6 @@
-#define Nfiles 2
+#define Cmdwidth	1024
+#define Ncmd		4
+#define Nfiles		2
 
 // Represents a 9p file
 typedef struct File9 File9;
