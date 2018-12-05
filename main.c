@@ -57,8 +57,7 @@ logcmd(char* str)
 char*
 log2str(void)
 {
-	char str[Ncmd * Cmdwidth];
-	memset(str, '\0', Ncmd * Cmdwidth);
+	char *str = mallocz(Ncmd * Cmdwidth, 1);
 
 	int i;
 	for(i = Ncmd-1; i >= 0; i--)
@@ -163,8 +162,6 @@ fsread(Req *r)
 		break;
 	case 1:
 		// log file
-		// TODO -- attach stdout to write to the read stream
-		// strcpy(readmsg, "log shows prior commands.\n");
 		strcpy(readmsg, log2str());
 		break;
 	default:
